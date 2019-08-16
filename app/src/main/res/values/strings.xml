@@ -47,5 +47,6 @@
     <string name="gl_switch">OpenGL mode</string>
     <string name="fps_placeholder">PLACEHOLDER</string>
     <string name="place_files_string">Place your local files in:</string>
+    <string name="opencv_switch">Open CV mode</string>
 
 </resources>

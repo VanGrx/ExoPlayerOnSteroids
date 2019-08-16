@@ -17,6 +17,8 @@ public class MyGLSurfaceView extends GLSurfaceView {
     }
 
 
+
+
     void init(SimpleExoPlayer player, FPSListener fpsListener) {
         setEGLContextClientVersion(2);
         mRenderer = new MyRenderer();

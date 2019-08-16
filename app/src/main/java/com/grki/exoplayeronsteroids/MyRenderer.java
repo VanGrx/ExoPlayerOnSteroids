@@ -207,7 +207,7 @@ public class MyRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFram
         updateSurface = true;
     }
 
-    private int loadShader(int shaderType, String source) {
+    static int loadShader(int shaderType, String source) {
         int shader = GLES20.glCreateShader(shaderType);
         if (shader != 0) {
             GLES20.glShaderSource(shader, source);
@@ -253,7 +253,7 @@ public class MyRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFram
         return program;
     }
 
-    private void checkGlError(String op) {
+    static void checkGlError(String op) {
         int error;
         if ((error = GLES20.glGetError()) != GLES20.GL_NO_ERROR) {
             Log.e(TAG, op + ": glError " + error);

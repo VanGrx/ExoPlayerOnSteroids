@@ -77,11 +77,6 @@ import java.util.List;
 import java.util.UUID;
 
 
-interface FPSListener {
-
-    void onFPSMeasured(int fps);
-}
-
 public class GLPlayerActivity extends Activity
         implements OnClickListener, PlaybackPreparer, PlayerControlView.VisibilityListener, FPSListener {
 

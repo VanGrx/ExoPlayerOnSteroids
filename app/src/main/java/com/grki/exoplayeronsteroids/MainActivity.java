@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
+import android.widget.CompoundButton;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.Switch;
@@ -80,6 +81,7 @@ public class MainActivity extends Activity
 
     public static Switch tSwitch;
     public static Switch gSwitch;
+    public static Switch oSwitch;
 
     public TextView local_place;
 
@@ -98,7 +100,19 @@ public class MainActivity extends Activity
 
         tSwitch = findViewById(R.id.tunnel_switch);
         gSwitch = findViewById(R.id.gl_switch);
+        oSwitch = findViewById(R.id.opencv_switch);
 
+        CompoundButton.OnCheckedChangeListener switchListener = new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (gSwitch == buttonView && isChecked)
+                    oSwitch.setChecked(false);
+                if (oSwitch == buttonView && isChecked)
+                    gSwitch.setChecked(false);
+            }
+        };
+
+        gSwitch.setOnCheckedChangeListener(switchListener);
+        oSwitch.setOnCheckedChangeListener(switchListener);
         local_place = findViewById(R.id.local_place);
 
         verifyStoragePermissions(this);
@@ -261,7 +275,6 @@ public class MainActivity extends Activity
         obj.put("uri", Uri);
         samples.put(obj);
     }
-
 
     private final class SampleListLoader extends AsyncTask<String, Void, List<SampleGroup>> {
 
@@ -570,6 +583,11 @@ public class MainActivity extends Activity
             intent.putExtra(GLPlayerActivity.DRM_LICENSE_URL_EXTRA, drmLicenseUrl);
             intent.putExtra(GLPlayerActivity.DRM_KEY_REQUEST_PROPERTIES_EXTRA, drmKeyRequestProperties);
             intent.putExtra(GLPlayerActivity.DRM_MULTI_SESSION_EXTRA, drmMultiSession);
+
+            intent.putExtra(OpenCVActivity.DRM_SCHEME_EXTRA, drmScheme);
+            intent.putExtra(OpenCVActivity.DRM_LICENSE_URL_EXTRA, drmLicenseUrl);
+            intent.putExtra(OpenCVActivity.DRM_KEY_REQUEST_PROPERTIES_EXTRA, drmKeyRequestProperties);
+            intent.putExtra(OpenCVActivity.DRM_MULTI_SESSION_EXTRA, drmMultiSession);
         }
     }
 
@@ -591,10 +609,13 @@ public class MainActivity extends Activity
         public Intent buildIntent(Context context) {
             Intent intent;
             if (MainActivity.gSwitch.isChecked()) {
-
                 intent = new Intent(context, GLPlayerActivity.class);
                 intent.putExtra(GLPlayerActivity.PREFER_EXTENSION_DECODERS_EXTRA, preferExtensionDecoders);
                 intent.putExtra(GLPlayerActivity.ABR_ALGORITHM_EXTRA, abrAlgorithm);
+            } else if (MainActivity.oSwitch.isChecked()) {
+                intent = new Intent(context, OpenCVActivity.class);
+                intent.putExtra(OpenCVActivity.PREFER_EXTENSION_DECODERS_EXTRA, preferExtensionDecoders);
+                intent.putExtra(OpenCVActivity.ABR_ALGORITHM_EXTRA, abrAlgorithm);
             } else {
                 intent = new Intent(context, PlayerActivity.class);
                 intent.putExtra(PlayerActivity.PREFER_EXTENSION_DECODERS_EXTRA, preferExtensionDecoders);
@@ -631,21 +652,13 @@ public class MainActivity extends Activity
 
         @Override
         public Intent buildIntent(Context context) {
-            if (MainActivity.gSwitch.isChecked()) {
-                return super.buildIntent(context)
-                        .setData(uri)
-                        .putExtra(GLPlayerActivity.EXTENSION_EXTRA, extension)
-                        .putExtra(GLPlayerActivity.AD_TAG_URI_EXTRA, adTagUri)
-                        .putExtra(GLPlayerActivity.TUNNELED_MODE, MainActivity.tSwitch.isChecked())
-                        .setAction(GLPlayerActivity.ACTION_VIEW);
-            } else {
-                return super.buildIntent(context)
-                        .setData(uri)
-                        .putExtra(PlayerActivity.EXTENSION_EXTRA, extension)
-                        .putExtra(PlayerActivity.AD_TAG_URI_EXTRA, adTagUri)
-                        .putExtra(PlayerActivity.TUNNELED_MODE, MainActivity.tSwitch.isChecked())
-                        .setAction(PlayerActivity.ACTION_VIEW);
-            }
+            return super.buildIntent(context)
+                    .setData(uri)
+                    .putExtra(PlayerActivity.EXTENSION_EXTRA, extension)
+                    .putExtra(PlayerActivity.AD_TAG_URI_EXTRA, adTagUri)
+                    .putExtra(PlayerActivity.TUNNELED_MODE, MainActivity.tSwitch.isChecked())
+                    .setAction(PlayerActivity.ACTION_VIEW);
+
         }
 
     }
@@ -672,16 +685,10 @@ public class MainActivity extends Activity
                 uris[i] = children[i].uri.toString();
                 extensions[i] = children[i].extension;
             }
-            if (MainActivity.gSwitch.isChecked())
-                return super.buildIntent(context)
-                        .putExtra(GLPlayerActivity.URI_LIST_EXTRA, uris)
-                        .putExtra(GLPlayerActivity.EXTENSION_LIST_EXTRA, extensions)
-                        .setAction(GLPlayerActivity.ACTION_VIEW_LIST);
-            else
-                return super.buildIntent(context)
-                        .putExtra(PlayerActivity.URI_LIST_EXTRA, uris)
-                        .putExtra(PlayerActivity.EXTENSION_LIST_EXTRA, extensions)
-                        .setAction(PlayerActivity.ACTION_VIEW_LIST);
+            return super.buildIntent(context)
+                    .putExtra(PlayerActivity.URI_LIST_EXTRA, uris)
+                    .putExtra(PlayerActivity.EXTENSION_LIST_EXTRA, extensions)
+                    .setAction(PlayerActivity.ACTION_VIEW_LIST);
         }
 
     }

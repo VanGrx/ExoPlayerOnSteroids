@@ -52,6 +52,15 @@
                 android:layout_weight="1"
                 android:text="@string/gl_switch"
                 android:textColor="@color/colorMain" />
+
+            <Switch
+                android:id="@+id/opencv_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="50dp"
+                android:layout_weight="1"
+                android:text="@string/opencv_switch"
+                android:textColor="@color/colorMain" />
         </LinearLayout>
 
 
