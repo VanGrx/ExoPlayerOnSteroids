@@ -274,7 +274,7 @@ public class GLPlayerActivity extends Activity
 
     @Override
     public void onVisibilityChange(int visibility) {
-        debugRootView.setVisibility(visibility);
+      //  debugRootView.setVisibility(visibility);
     }
 
     @SuppressLint("StringFormatInvalid")
@@ -591,6 +591,10 @@ public class GLPlayerActivity extends Activity
                 button.setText(label);
                 button.setTag(i);
                 button.setOnClickListener(this);
+                button.setBackgroundResource(R.drawable.debug_button);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                lp.setMargins(0, 20, 40, 20);
+                button.setLayoutParams(lp);
                 debugRootView.addView(button);
             }
         }

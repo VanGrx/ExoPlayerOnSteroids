@@ -497,7 +497,7 @@ public class MainActivity extends Activity
             if (view == null) {
                 view =
                         getLayoutInflater()
-                                .inflate(android.R.layout.simple_expandable_list_item_1, parent, false);
+                                .inflate(R.layout.list_parent_item, parent, false);
             }
             ((TextView) view).setText(getGroup(groupPosition).title);
             return view;

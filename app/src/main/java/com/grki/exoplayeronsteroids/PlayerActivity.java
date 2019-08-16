@@ -157,7 +157,6 @@ public class PlayerActivity extends Activity
         debugTextView = findViewById(R.id.debug_text_view);
 
         playerView = findViewById(R.id.player_view);
-        playerView.setControllerVisibilityListener(this);
         playerView.setErrorMessageProvider(new PlayerErrorMessageProvider());
         playerView.requestFocus();
 
@@ -594,6 +593,10 @@ public class PlayerActivity extends Activity
                 button.setText(label);
                 button.setTag(i);
                 button.setOnClickListener(this);
+                button.setBackgroundResource(R.drawable.debug_button);
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                lp.setMargins(0, 20, 40, 20);
+                button.setLayoutParams(lp);
                 debugRootView.addView(button);
             }
         }
