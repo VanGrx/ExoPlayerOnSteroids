@@ -1,6 +1,6 @@
 package com.grki.exoplayeronsteroids;
 
-interface FPSListener{
+interface FPSListener {
 
     void onFPSMeasured(int fps);
 }

@@ -1,18 +1,3 @@
-/*
- * Copyright (C) 2016 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.grki.exoplayeronsteroids;
 
 import android.annotation.SuppressLint;
@@ -33,7 +18,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,8 +34,6 @@ import com.google.android.exoplayer2.drm.FrameworkMediaCrypto;
 import com.google.android.exoplayer2.drm.FrameworkMediaDrm;
 import com.google.android.exoplayer2.drm.HttpMediaDrmCallback;
 import com.google.android.exoplayer2.drm.UnsupportedDrmException;
-import com.google.android.exoplayer2.mediacodec.MediaCodecRenderer.DecoderInitializationException;
-import com.google.android.exoplayer2.mediacodec.MediaCodecUtil.DecoderQueryException;
 import com.google.android.exoplayer2.offline.FilteringManifestParser;
 import com.google.android.exoplayer2.source.BehindLiveWindowException;
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource;
@@ -79,12 +61,10 @@ import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.ui.DebugTextViewHelper;
 import com.google.android.exoplayer2.ui.PlayerControlView;
-import com.google.android.exoplayer2.ui.PlayerView;
 import com.google.android.exoplayer2.ui.TrackSelectionView;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.HttpDataSource;
-import com.google.android.exoplayer2.util.ErrorMessageProvider;
 import com.google.android.exoplayer2.util.EventLogger;
 import com.google.android.exoplayer2.util.Util;
 
@@ -96,8 +76,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-
-/** An activity that plays media using {@link SimpleExoPlayer}. */
 public class OpenCVActivity extends Activity
         implements OnClickListener, PlaybackPreparer, PlayerControlView.VisibilityListener, FPSListener {
 
@@ -121,19 +99,14 @@ public class OpenCVActivity extends Activity
 
     public static final String ABR_ALGORITHM_EXTRA = "abr_algorithm";
 
-    public static final int screenWidth=1920;
-    public static final int screenHeight=1080;
-
     public static final String TUNNELED_MODE = "TUNNELED";
     public static final String PASSTHROUGH_MODE = "PASSTHROUGH";
 
     private static final String ABR_ALGORITHM_DEFAULT = "default";
     private static final String ABR_ALGORITHM_RANDOM = "random";
 
-    // For backwards compatibility only.
     private static final String DRM_SCHEME_UUID_EXTRA = "drm_scheme_uuid";
 
-    // Saved instance state keys.
     private static final String KEY_TRACK_SELECTOR_PARAMETERS = "track_selector_parameters";
     private static final String KEY_WINDOW = "window";
     private static final String KEY_POSITION = "position";
@@ -141,12 +114,12 @@ public class OpenCVActivity extends Activity
 
     private static final DefaultBandwidthMeter BANDWIDTH_METER = new DefaultBandwidthMeter();
     private static final CookieManager DEFAULT_COOKIE_MANAGER;
+
     static {
         DEFAULT_COOKIE_MANAGER = new CookieManager();
         DEFAULT_COOKIE_MANAGER.setCookiePolicy(CookiePolicy.ACCEPT_ORIGINAL_SERVER);
     }
 
-    private PlayerView playerView;
     private LinearLayout debugRootView;
     private TextView debugTextView;
 
@@ -162,14 +135,9 @@ public class OpenCVActivity extends Activity
     private boolean startAutoPlay;
     private int startWindow;
     private long startPosition;
-
-    // Fields used only for ad playback. The ads loader is loaded via reflection.
-
     private AdsLoader adsLoader;
     private Uri loadedAdTagUri;
     private ViewGroup adUiViewGroup;
-
-    // Activity lifecycle
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -180,15 +148,8 @@ public class OpenCVActivity extends Activity
         }
 
         setContentView(R.layout.cv_player_activity);
-//        View rootView = findViewById(R.id.root);
-//        rootView.setOnClickListener(this);
         debugRootView = findViewById(R.id.controls_root);
         debugTextView = findViewById(R.id.debug_text_view);
-
-//        playerView = findViewById(R.id.player_view);
-//        playerView.setControllerVisibilityListener(this);
-//        playerView.setErrorMessageProvider(new PlayerErrorMessageProvider());
-//        playerView.requestFocus();
 
         if (savedInstanceState != null) {
             trackSelectorParameters = savedInstanceState.getParcelable(KEY_TRACK_SELECTOR_PARAMETERS);
@@ -196,13 +157,12 @@ public class OpenCVActivity extends Activity
             startWindow = savedInstanceState.getInt(KEY_WINDOW);
             startPosition = savedInstanceState.getLong(KEY_POSITION);
         } else {
-            if(getIntent().getBooleanExtra(TUNNELED_MODE, false)) {
+            if (getIntent().getBooleanExtra(TUNNELED_MODE, false)) {
                 trackSelectorParameters = new DefaultTrackSelector
                         .ParametersBuilder()
                         .setTunnelingAudioSessionId(C.generateAudioSessionIdV21(this))
                         .build();
-            }
-            else
+            } else
                 trackSelectorParameters = new DefaultTrackSelector
                         .ParametersBuilder()
                         .build();
@@ -221,15 +181,13 @@ public class OpenCVActivity extends Activity
     @Override
     public void onStart() {
         super.onStart();
-        if (Util.SDK_INT > 23) {
-            initializePlayer();
-        }
+        initializePlayer();
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        if (Util.SDK_INT <= 23 || player == null) {
+        if (player == null) {
             initializePlayer();
         }
     }
@@ -237,17 +195,12 @@ public class OpenCVActivity extends Activity
     @Override
     public void onPause() {
         super.onPause();
-        if (Util.SDK_INT <= 23) {
-            releasePlayer();
-        }
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        if (Util.SDK_INT > 23) {
-            releasePlayer();
-        }
+        releasePlayer();
     }
 
     @Override
@@ -260,8 +213,6 @@ public class OpenCVActivity extends Activity
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         if (grantResults.length == 0) {
-            // Empty results are triggered if a permission is requested while another request was already
-            // pending and can be safely ignored in this case.
             return;
         }
         if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -282,15 +233,10 @@ public class OpenCVActivity extends Activity
         outState.putLong(KEY_POSITION, startPosition);
     }
 
-    // Activity input
-
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        // See whether the player view wants to handle media or DPAD keys events.
         return super.dispatchKeyEvent(event);
     }
-
-    // OnClickListener methods
 
     @Override
     public void onClick(View view) {
@@ -314,21 +260,15 @@ public class OpenCVActivity extends Activity
         }
     }
 
-    // PlaybackControlView.PlaybackPreparer implementation
-
     @Override
     public void preparePlayback() {
         initializePlayer();
     }
 
-    // PlaybackControlView.VisibilityListener implementation
-
     @Override
     public void onVisibilityChange(int visibility) {
         debugRootView.setVisibility(visibility);
     }
-
-    // Internal methods
 
     @SuppressLint("StringFormatInvalid")
     private void initializePlayer() {
@@ -338,8 +278,8 @@ public class OpenCVActivity extends Activity
             Uri[] uris;
             String[] extensions;
             if (ACTION_VIEW.equals(action)) {
-                uris = new Uri[] {intent.getData()};
-                extensions = new String[] {intent.getStringExtra(EXTENSION_EXTRA)};
+                uris = new Uri[]{intent.getData()};
+                extensions = new String[]{intent.getStringExtra(EXTENSION_EXTRA)};
             } else if (ACTION_VIEW_LIST.equals(action)) {
                 String[] uriStrings = intent.getStringArrayExtra(URI_LIST_EXTRA);
                 uris = new Uri[uriStrings.length];
@@ -356,7 +296,6 @@ public class OpenCVActivity extends Activity
                 return;
             }
             if (Util.maybeRequestReadExternalStoragePermission(this, uris)) {
-                // The player will be reinitialized if the permission is granted.
                 return;
             }
 
@@ -367,25 +306,23 @@ public class OpenCVActivity extends Activity
                         intent.getStringArrayExtra(DRM_KEY_REQUEST_PROPERTIES_EXTRA);
                 boolean multiSession = intent.getBooleanExtra(DRM_MULTI_SESSION_EXTRA, false);
                 int errorStringId = R.string.error_drm_unknown;
-                if (Util.SDK_INT < 18) {
-                    errorStringId = R.string.error_drm_not_supported;
-                } else {
-                    try {
-                        String drmSchemeExtra = intent.hasExtra(DRM_SCHEME_EXTRA) ? DRM_SCHEME_EXTRA
-                                : DRM_SCHEME_UUID_EXTRA;
-                        UUID drmSchemeUuid = Util.getDrmUuid(intent.getStringExtra(drmSchemeExtra));
-                        if (drmSchemeUuid == null) {
-                            errorStringId = R.string.error_drm_unsupported_scheme;
-                        } else {
-                            drmSessionManager =
-                                    buildDrmSessionManagerV18(
-                                            drmSchemeUuid, drmLicenseUrl, keyRequestPropertiesArray, multiSession);
-                        }
-                    } catch (UnsupportedDrmException e) {
-                        errorStringId = e.reason == UnsupportedDrmException.REASON_UNSUPPORTED_SCHEME
-                                ? R.string.error_drm_unsupported_scheme : R.string.error_drm_unknown;
+
+                try {
+                    String drmSchemeExtra = intent.hasExtra(DRM_SCHEME_EXTRA) ? DRM_SCHEME_EXTRA
+                            : DRM_SCHEME_UUID_EXTRA;
+                    UUID drmSchemeUuid = Util.getDrmUuid(intent.getStringExtra(drmSchemeExtra));
+                    if (drmSchemeUuid == null) {
+                        errorStringId = R.string.error_drm_unsupported_scheme;
+                    } else {
+                        drmSessionManager =
+                                buildDrmSessionManagerV18(
+                                        drmSchemeUuid, drmLicenseUrl, keyRequestPropertiesArray, multiSession);
                     }
+                } catch (UnsupportedDrmException e) {
+                    errorStringId = e.reason == UnsupportedDrmException.REASON_UNSUPPORTED_SCHEME
+                            ? R.string.error_drm_unsupported_scheme : R.string.error_drm_unknown;
                 }
+
                 if (drmSessionManager == null) {
                     showToast(errorStringId);
                     finish();
@@ -413,7 +350,7 @@ public class OpenCVActivity extends Activity
                             : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
                             : DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;
             boolean passthroughOverride = intent.getBooleanExtra(PASSTHROUGH_MODE, false);
-            if(passthroughOverride) {
+            if (passthroughOverride) {
                 extensionRendererMode = DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF;
             }
             DefaultRenderersFactory renderersFactory =
@@ -429,13 +366,10 @@ public class OpenCVActivity extends Activity
             player.setPlayWhenReady(startAutoPlay);
             player.addAnalyticsListener(new EventLogger(trackSelector));
 
-//            playerView.setPlayer(player);
-//            playerView.setPlaybackPreparer(this);
-//            TextureView textureView = findViewById(R.id.texture_view);
             debugTextView = findViewById(R.id.debug_text_view);
 
             MyCVSurfaceView mygl = findViewById(R.id.my_cv_surface_view);
-            mygl.init(player,this);
+            mygl.init(player, this);
 
 
             debugViewHelper = new DebugTextViewHelper(player, debugTextView);
@@ -559,7 +493,6 @@ public class OpenCVActivity extends Activity
             adsLoader.release();
             adsLoader = null;
             loadedAdTagUri = null;
-            //playerView.getOverlayFrameLayout().removeAllViews();
         }
     }
 
@@ -583,36 +516,22 @@ public class OpenCVActivity extends Activity
         startPosition = C.TIME_UNSET;
     }
 
-    /**
-     * Returns a new DataSource factory.
-     *
-     * @param useBandwidthMeter Whether to set {@link #BANDWIDTH_METER} as a listener to the new
-     *     DataSource factory.
-     * @return A new DataSource factory.
-     */
     private DataSource.Factory buildDataSourceFactory(boolean useBandwidthMeter) {
         return ((DemoApplication) getApplication())
                 .buildDataSourceFactory(useBandwidthMeter ? BANDWIDTH_METER : null);
     }
 
-    /** Returns an ads media source, reusing the ads loader if one exists. */
-    private @Nullable MediaSource createAdsMediaSource(MediaSource mediaSource, Uri adTagUri) {
-        // Load the extension source using reflection so the com.google.android.exoplayer2.demo app doesn't have to depend on it.
-        // The ads loader is reused for multiple playbacks, so that ad playback can resume.
+    private @Nullable
+    MediaSource createAdsMediaSource(MediaSource mediaSource, Uri adTagUri) {
         try {
             Class<?> loaderClass = Class.forName("com.google.android.exoplayer2.ext.ima.ImaAdsLoader");
             if (adsLoader == null) {
-                // Full class names used so the LINT.IfChange rule triggers should any of the classes move.
-                // LINT.IfChange
                 Constructor<? extends AdsLoader> loaderConstructor =
                         loaderClass
                                 .asSubclass(AdsLoader.class)
                                 .getConstructor(android.content.Context.class, Uri.class);
-                // LINT.ThenChange(../../../../../../../../proguard-rules.txt)
                 adsLoader = loaderConstructor.newInstance(this, adTagUri);
                 adUiViewGroup = new FrameLayout(this);
-                // The com.google.android.exoplayer2.demo app has a non-null overlay frame layout.
-               // playerView.getOverlayFrameLayout().addView(adUiViewGroup);
             }
             AdsMediaSource.MediaSourceFactory adMediaSourceFactory =
                     new AdsMediaSource.MediaSourceFactory() {
@@ -623,7 +542,7 @@ public class OpenCVActivity extends Activity
 
                         @Override
                         public int[] getSupportedTypes() {
-                            return new int[] {C.TYPE_DASH, C.TYPE_SS, C.TYPE_HLS, C.TYPE_OTHER};
+                            return new int[]{C.TYPE_DASH, C.TYPE_SS, C.TYPE_HLS, C.TYPE_OTHER};
                         }
                     };
             return new AdsMediaSource(mediaSource, adMediaSourceFactory, adsLoader, adUiViewGroup);
@@ -634,8 +553,6 @@ public class OpenCVActivity extends Activity
             throw new RuntimeException(e);
         }
     }
-
-    // User controls
 
     private void updateButtonVisibilities() {
         debugRootView.removeAllViews();
@@ -717,8 +634,6 @@ public class OpenCVActivity extends Activity
         @Override
         public void onPositionDiscontinuity(@Player.DiscontinuityReason int reason) {
             if (player.getPlaybackError() != null) {
-                // The user has performed a seek whilst in the error state. Update the resume position so
-                // that if the user then retries, playback resumes from the position to which they seeked.
                 updateStartPosition();
             }
         }
@@ -753,41 +668,6 @@ public class OpenCVActivity extends Activity
                 }
                 lastSeenTrackGroupArray = trackGroups;
             }
-        }
-    }
-
-    private class PlayerErrorMessageProvider implements ErrorMessageProvider<ExoPlaybackException> {
-
-        @SuppressLint("StringFormatInvalid")
-        @Override
-        public Pair<Integer, String> getErrorMessage(ExoPlaybackException e) {
-            String errorString = getString(R.string.error_generic);
-            if (e.type == ExoPlaybackException.TYPE_RENDERER) {
-                Exception cause = e.getRendererException();
-                if (cause instanceof DecoderInitializationException) {
-                    // Special case for decoder initialization failures.
-                    DecoderInitializationException decoderInitializationException =
-                            (DecoderInitializationException) cause;
-                    if (decoderInitializationException.decoderName == null) {
-                        if (decoderInitializationException.getCause() instanceof DecoderQueryException) {
-                            errorString = getString(R.string.error_querying_decoders);
-                        } else if (decoderInitializationException.secureDecoderRequired) {
-                            errorString =
-                                    getString(
-                                            R.string.error_no_secure_decoder, decoderInitializationException.mimeType);
-                        } else {
-                            errorString =
-                                    getString(R.string.error_no_decoder, decoderInitializationException.mimeType);
-                        }
-                    } else {
-                        errorString =
-                                getString(
-                                        R.string.error_instantiating_decoder,
-                                        decoderInitializationException.decoderName);
-                    }
-                }
-            }
-            return Pair.create(0, errorString);
         }
     }
 

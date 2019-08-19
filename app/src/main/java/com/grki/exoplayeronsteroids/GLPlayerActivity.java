@@ -269,7 +269,6 @@ public class GLPlayerActivity extends Activity
 
     @Override
     public void onVisibilityChange(int visibility) {
-      //  debugRootView.setVisibility(visibility);
     }
 
     @SuppressLint("StringFormatInvalid")
@@ -371,7 +370,7 @@ public class GLPlayerActivity extends Activity
             debugTextView = findViewById(R.id.debug_text_view);
 
             MyGLSurfaceView mygl = findViewById(R.id.my_gl_surface_view);
-            mygl.init(player,this);
+            mygl.init(player, this);
 
 
             debugViewHelper = new DebugTextViewHelper(player, debugTextView);
@@ -674,7 +673,6 @@ public class GLPlayerActivity extends Activity
     @Override
     public void onFPSMeasured(final int fps) {
         Log.d("FPS from activity", "" + fps);
-
 
 
         runOnUiThread(new Runnable() {

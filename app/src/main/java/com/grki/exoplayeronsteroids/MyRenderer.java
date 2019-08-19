@@ -128,7 +128,7 @@ public class MyRenderer implements GLSurfaceView.Renderer, SurfaceTexture.OnFram
     public void onSurfaceCreated(GL10 glUnused, EGLConfig config) {
         GLES20.glEnable(GLES20.GL_BLEND);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-        GLES20.glClearColor(0x10/255.0f, 0x3C/255.0f,0x42/255.0f, 1.0f);
+        GLES20.glClearColor(0x10 / 255.0f, 0x3C / 255.0f, 0x42 / 255.0f, 1.0f);
 
         String mFragmentShader = "#extension GL_OES_EGL_image_external : require\n" +
                 "precision mediump float;\n" +
